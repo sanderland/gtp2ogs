@@ -14,6 +14,7 @@ const Game = require('./game').Game;
 /** Connection **/
 /****************/
 const ignorable_notifications = {
+    'delete': true,
     'gameStarted': true,
     'gameEnded': true,
     'gameDeclined': true,
@@ -129,10 +130,13 @@ class Connection {
         socket.on('notification', (notification) => {
             if (this[`on_${notification.type}`]) {
                 this[`on_${notification.type}`](notification);
-            }
-            else if (!(notification.type in ignorable_notifications)) {
-                console.log("Unhandled notification type: ", notification.type, notification);
-                this.deleteNotification(notification);
+            } else {
+                if (!(notification.type in ignorable_notifications)) {
+                    console.log("Unhandled notification type: ", notification.type, notification);
+                }
+                if (notification.type !== 'delete') {
+                    this.deleteNotification(notification);
+                }
             }
         });
 
@@ -170,11 +174,6 @@ class Connection {
                     }
                 }
                 // Don't connect to finished games.
-                return;
-            }
-
-            // Don't connect if it is not our turn.
-            if (gamedata.player_to_move !== this.bot_id) {
                 return;
             }
 
@@ -310,7 +309,7 @@ class Connection {
         } else if (config.DEBUG) {
             console.log("There are no connected games");
         }
-        const connected_games_per_user = this.gamesForPlayer(notification.user.id);
+        const connected_games_per_user = this.countGamesForPlayer(notification.user.id);
         if (connected_games_per_user >= config.maxconnectedgamesperuser) {
             conn_log("Too many connected games for this user.");
             const msg = `Maximum number of simultaneous games allowed per player `
@@ -505,19 +504,10 @@ class Connection {
             .catch(conn_log)
         }
     }
-    processMove(gamedata) {
-        const game = this.connectToGame(gamedata.id)
-        game.makeMove(gamedata.move_number);
-    }
-    processStoneRemoval(gamedata) {
-        return this.processMove(gamedata);
-    }
-    on_delete() {
-        /* don't care about delete notifications */
-    }
-    on_gameStarted() {
-        /* don't care about gameStarted notifications */
-    }
+    // processMove(gamedata) {
+    //     const game = this.connectToGame(gamedata.id)
+    //     game.makeMove(gamedata.move_number);
+    // }
     addGameForPlayer(game_id, player) {
         if (!this.games_by_player[player]) {
             this.games_by_player[player] = [ game_id ];
@@ -531,7 +521,7 @@ class Connection {
     removeGameForPlayer(game_id) {
         for (const player in this.games_by_player) {
             const idx = this.games_by_player[player].indexOf(game_id);
-            if (idx === -1)  continue;
+            if (idx === -1) continue;
 
             this.games_by_player[player].splice(idx, 1);  // Remove element
             if (this.games_by_player[player].length === 0) {
@@ -540,7 +530,7 @@ class Connection {
             return;
         }
     }
-    gamesForPlayer(player) {
+    countGamesForPlayer(player) {
         if (!this.games_by_player[player])  return 0;
         return this.games_by_player[player].length;
     }
