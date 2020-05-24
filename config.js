@@ -36,9 +36,10 @@ exports.updateFromArgv = function() {
         .demand('apikey')
         .describe('username', 'Specify the username of the bot, for example GnuGo')
         .describe('apikey', 'Specify the API key for the bot')
-        .describe('greeting')
+        .describe('greeting', 'Greeting message to appear in chat at first move (ex: Hello, have a nice game)')
         .string('greeting')
-        .describe('farewell', 'Thank you message to appear in chat at end of game (ex: -Thank you for playing-)')
+        .describe('greetingbotcommand', `Additional greeting message displaying bot command`)
+        .describe('farewell', 'Thank you message to appear in chat at end of game (ex: Thank you for playing)')
         .string('farewell')
         .describe('farewellscore', 'Send the score according to the bot at the end of the game')
         .describe('rejectnew', 'Reject all new challenges with the default reject message')
@@ -46,10 +47,12 @@ exports.updateFromArgv = function() {
         .default('rejectnewmsg', 'Currently, this bot is not accepting games, try again later ')
         .describe('rejectnewfile', 'Reject new challenges if file exists (checked each time, can use for load-balancing)')
         .describe('debug', 'Output GTP command and responses from your Go engine')
-        .describe('ogspv', `Send winrate and variations for supported AIs (${ogsPvAIs.join(', ')})with supported settings, in OGS games`)
+        .describe('ogspv', `Send winrate and variations for supported AIs (${ogsPvAIs.join(', ')})with supported settings`)
         .string('ogspv')
         .describe('aichat', 'Allow bots to send chat messages using `DISCUSSION:` `MALKOVICH:` in stderr')
-        .describe('logfile', 'In addition to logging to the console, also log gtp2ogs output to a text file')
+        .describe('logfile', 'In addition to logging to the console, also log gtp2ogs output to a text file.'
+                             + 'Filename argument is optional (using only --logfile will use default filename,'
+                             + 'for example gtp2ogs_logfile_2020-05-21T21:40:22.910Z)')
         .describe('json', 'Send and receive GTP commands in a JSON encoded format')
         .describe('beta', 'Connect to the beta server (sets ggs/rest hosts to the beta server)')
         .describe('host', 'OGS Host to connect to')
@@ -245,6 +248,9 @@ exports.updateFromArgv = function() {
     /* Add and Modify exports*/
     if (argv.debug) {
         exports.DEBUG = true;
+    }
+    if (argv.logfile && typeof argv.logfile === "boolean") {
+        exports.logfile = `gtp2ogs_logfile_${new Date().toISOString()}`;
     }
     for (const k of ["timeout", "startupbuffer"]) {
         if (argv[k]) {
