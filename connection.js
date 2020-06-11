@@ -178,7 +178,7 @@ class Connection {
             }
 
             // Set up the game so it can listen for events.
-            this.connectToGame(gamedata.id);
+            this.connectToGame(gamedata);
         });
     }
     auth(obj) {
@@ -190,13 +190,14 @@ class Connection {
         }
         return obj;
     }
-    connectToGame(game_id) {
+    connectToGame(gamedata) {
+        const game_id = gamedata.id
         if (game_id in this.connected_games) {
             if (config.DEBUG) conn_log("Connected to game", game_id, "already");
             return this.connected_games[game_id];
         }
 
-        return this.connected_games[game_id] = new Game(this, game_id);
+        return this.connected_games[game_id] = new Game(this, gamedata);
     }
     disconnectFromGame(game_id) {
         if (config.DEBUG) conn_log("disconnectFromGame", game_id);
@@ -290,6 +291,7 @@ class Connection {
         // check bot is available, else don't mislead user
         if (config.check_rejectnew()) {
             conn_log("Not accepting new games (rejectnew).");
+            this.hide();
             return { reject: true, msg: config.rejectnewmsg };
         }
         if (this.connected_games) {

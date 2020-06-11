@@ -7,14 +7,22 @@ const Bot = require('./bot').Bot;
 const console = require('./console').console;
 const config = require('./config');
 
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+} 
+
 /**********/
 /** Game **/
 /**********/
 class Game {
-    constructor(conn, game_id) {
+    constructor(conn, gamedata) {
+        const game_id = gamedata.id;
         this.conn = conn;
         this.game_id = game_id;
         this.socket = conn.socket;
+        this.active_game_state = gamedata;
         this.state = null;
         this.opponent_evenodd = null;
         this.greeted = false;
@@ -257,8 +265,10 @@ class Game {
         }, 1000);
     }
 
+
     // Kill the bot, if it is currently running.
-    ensureBotKilled() {
+    async ensureBotKilled() {
+        await sleep(1000); // allow output logging to
         if (this.bot) {
             if (this.bot.failed) {
                 this.bot_failures++;
@@ -490,7 +500,8 @@ class Game {
                     this.ensureBotKilled();
                 }
             };
-            this.bot.command('final_score', sendTheScore, null, true); // allow bot to process end of game
+            this.state.active_game = this.active_game_state
+            this.bot.command('final_score ' + JSON.stringify(this.state), sendTheScore, null, true); // allow bot to process end of game
         } else if (this.bot) {
             this.bot.gameOver();
             this.ensureBotKilled();

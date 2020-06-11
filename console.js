@@ -18,7 +18,7 @@ const console_config = {
             case 'log': data.title = ' '; break;
             case 'info': data.title = ' '; break;
             case 'warn': data.title = '!'; break;
-            case 'error': data.title = '!!!!!'; break;
+            case 'error': data.title = '!!'; break;
         }
         if (config.DEBUG) data.space = " ".repeat(Math.max(0, 30 - `${data.file}:${data.line}`.length));
     }
